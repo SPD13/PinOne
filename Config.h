@@ -115,6 +115,16 @@ class Config {
     bool bleRumblePwm = false;
     unsigned char bleRumbleThreshold = 1;
 
+    // Wi-Fi DOF: joins this network and takes output values from ArtNet (DMX over
+    // UDP), e.g. libdof on a Meta Quest, where USB and Bluetooth DOF aren't
+    // available. DMX channel artnetFirstChannel drives output 1, the next channel
+    // output 2, and so on. See WifiDof.
+    bool wifiEnabled = false;
+    char wifiSsid[33] = "";      // up to 32 bytes
+    char wifiPassword[65] = "";  // up to 64 bytes; never sent back to the config tool
+    uint16_t artnetUniverse = 0;      // 0-32767 (ArtNet port-address: net, sub-net, universe)
+    uint16_t artnetFirstChannel = 1;  // 1-512
+
     // Which gamepad axis each nudge/plunger signal is reported on over USB:
     // 0 = X, 1 = Y, 2 = Z, 3 = Rx, 4 = Ry (see MinimalGamepad::setAxis()).
     // Each signal needs its own axis; the config tool enforces that.
@@ -243,7 +253,7 @@ class Config {
 
   private:
     // must match the size of toConfigBytes() in the config tool; the last byte is the end marker
-    static const uint16_t CONFIG_TRANSFER_SIZE = 613;
+    static const uint16_t CONFIG_TRANSFER_SIZE = 715;
     static const unsigned char CONFIG_END_MARKER = 42;
     unsigned char configTransfer[CONFIG_TRANSFER_SIZE];
     uint16_t configTransferPos = 0;
@@ -256,6 +266,8 @@ class Config {
     int16_t readIntFromByte();
     void readConfigArray(unsigned char* configArray, unsigned char size);
     void printConfigArray(unsigned char* configArray, unsigned char size);
+    void readConfigString(char* str, uint8_t wireSize, uint8_t bufSize);
+    void printConfigString(const char* str, uint8_t wireSize);
 
 };
 

@@ -12,6 +12,7 @@ Communication comm;
 Outputs outputs;
 Config config;
 BleController bleController;
+WifiDof wifiDof;
 
 // Arduino IDE board settings:
 //   Board: ESP32-Arduino -> ESP32-S3-USB-OTG
@@ -46,6 +47,9 @@ void setup() {
   if (config.bluetoothEnable) {
     bleController.begin();
   }
+
+  // After Bluetooth, so it knows whether the radio is shared (see WifiDof::start())
+  wifiDof.begin();
 
   outputTaskStart();
 }

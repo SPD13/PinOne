@@ -50,7 +50,7 @@ Outputs 15-62 are not on GPIOs; they are the 48 channels of the three PCA9685 bo
 ## Architecture
 
 - **Input pass** (`loop()`, core 1): plunger, accelerometer, buttons, USB gamepad/keyboard reports and BLE updates. Every input is read on every pass.
-- **Output task** (`OutputTask.cpp`, core 0, priority 2): DOF and config-tool communication, light show, direct PWM and PCA9685 writes, IR transmit, profile-change notifications. The input pass hands it work through a command queue (`postOutputCommand()`) so slow I2C/IR work never delays button or plunger reads.
+- **Output task** (`OutputTask.cpp`, core 0, priority 2): DOF and config-tool communication, Wi-Fi DOF (ArtNet) frames, light show, direct PWM and PCA9685 writes, IR transmit, profile-change notifications. The input pass hands it work through a command queue (`postOutputCommand()`) so slow I2C/IR work never delays button or plunger reads.
 - **Mutexes** (`Threading.h`): `inputMutex` is held during each input pass and during config-tool config/BLE-map transfers; `i2cMutex` guards the shared I2C bus (accelerometer reads vs. PCA9685 writes).
 
 ## Build Configuration (Arduino IDE)
@@ -180,6 +180,7 @@ Presence of each PCA9685 board and the accelerometer (and the address it answere
 - **IR Transmitter**: NEC, Samsung, Sony protocols via RMT peripheral
 - **Configuration**: USB HID vendor channel to the PinOne Config Tool
 - **DOF**: output packets arrive over the HID vendor channel; a legacy USB CDC serial DOF fallback (enabled by default, `legacySerialDofEnabled`) supports un-updated DirectOutput installs
+- **Wi-Fi DOF** (`WifiDof.cpp`): optional (config tool, Settings page). Joins a 2.4 GHz network and listens for ArtNet (ArtDMX on UDP 6454), the only DOF output libdof builds for Android, so a Meta Quest can drive the outputs while the board stays in the Xbox Bluetooth profile. DMX channel `artnetFirstChannel` (default 1) of universe `artnetUniverse` (default 0) drives output 1, the next 62 channels outputs 2-63; frames go through the same path as USB DOF packets. Outputs ArtNet turned on are switched off if the Wi-Fi link drops. Modem sleep (up to ~100 ms extra latency) can only be turned off when Bluetooth isn't running, as the two share the radio. The config tool polls live status with the `WIFI_STATUS` (15) admin command; the reply is `W,<state>,<ip0>,<ip1>,<ip2>,<ip3>,<-dBm>,<artnet>,<otherUniverse>`. The saved password is never sent back to the tool
 - **Storage**: ESP32 NVS (Preferences library) — `pinone` namespace for settings, `pinball` namespace for the BLE button map and device name
 
 ## Firmware Version
