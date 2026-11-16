@@ -212,7 +212,11 @@ class Config {
     // X/Y gamepad axes, the integrated velocity is reported on the Rx/Ry axes.
     bool accelerometerVelocityEnabled = false;
     int accelerometerVelocityDecayTime = 100;  // velocity half-life, in milliseconds
-    int accelerometerVelocityScale = 100;       // INT16 units per mm/s
+    // INT16 units per mm/s; full scale is 32767 / this value mm/s. For real-world
+    // nudge strength, VPX 10.8.0 needs X/Y-Gain = 242842 / this value % (1518% at
+    // 160), and VPX 10.8.1+ needs the sensor "Unit scale" = 32.768 / this value
+    // (160 makes its built-in "Pinscape nudge velocity" preset, 0.2048, exact).
+    int accelerometerVelocityScale = 160;
 
     // Soft limit on the acceleration reading. Below the knee the response is
     // linear; above it the reading is compressed toward accelerometerMax (and
