@@ -20,6 +20,19 @@
 #define XBOX_DOF_REPORT_ID      0x06
 #define XBOX_DOF_REPORT_SIZE    9
 
+// Identity in Xbox mode: a feature report of the same vendor collection, so a host can tell the PinOne from a real Xbox pad (the
+// two share the name, ids and version) without sending it anything. Read only (a host's write is undone), 32 bytes:
+//   0-7    "PinOne" and two zeros
+//   8      format of this report, 1
+//   9      capabilities: bit 0 = DOF output report (XBOX_DOF_REPORT_ID)
+//   10-31  firmware version (FIRMWARE_VERSION), ASCII, padded with zeros
+// Hosts that don't know it never read it; Windows and SDL keep seeing an Xbox controller.
+#define XBOX_IDENTITY_REPORT_ID       0x07
+#define XBOX_IDENTITY_REPORT_SIZE     32
+#define XBOX_IDENTITY_FORMAT          1
+#define XBOX_IDENTITY_CAPS_DOF        0x01
+#define XBOX_IDENTITY_VERSION_OFFSET  10
+
 static const uint8_t xboxReportMap[] = {
         0x05, 0x01,
         0x09, 0x05,
@@ -168,5 +181,10 @@ static const uint8_t xboxReportMap[] = {
         0x75, 0x08,                 //   Report Size (8)
         0x95, XBOX_DOF_REPORT_SIZE, //   Report Count (9)
         0x91, 0x02,                 //   Output (Data, Variable, Absolute)
+        // Identity (see XBOX_IDENTITY_REPORT_ID)
+        0x85, XBOX_IDENTITY_REPORT_ID,   //   Report ID (7)
+        0x09, 0x02,                      //   Usage (0x02)
+        0x95, XBOX_IDENTITY_REPORT_SIZE, //   Report Count (32), size 8 and range 0-255 as above
+        0xB1, 0x03,                      //   Feature (Constant, Variable, Absolute)
         0xC0                        // End Collection
 };

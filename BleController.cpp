@@ -113,6 +113,21 @@ public:
     }
 };
 
+// Identity in Xbox mode (XBOX_IDENTITY_REPORT_ID): read only, a host's write (SET_REPORT) is undone
+static void setIdentityValue(NimBLECharacteristic* chr) {
+    uint8_t value[XBOX_IDENTITY_REPORT_SIZE] = {};
+    memcpy(value, "PinOne", 6);
+    value[8] = XBOX_IDENTITY_FORMAT;
+    value[9] = XBOX_IDENTITY_CAPS_DOF;
+    strncpy((char*)value + XBOX_IDENTITY_VERSION_OFFSET, FIRMWARE_VERSION, XBOX_IDENTITY_REPORT_SIZE - XBOX_IDENTITY_VERSION_OFFSET - 1);
+    chr->setValue(value, sizeof(value));
+}
+
+class BleController::IdentityCallbacks : public NimBLECharacteristicCallbacks {
+public:
+    void onWrite(NimBLECharacteristic* chr, NimBLEConnInfo&) override { setIdentityValue(chr); }
+};
+
 class BleController::InputCallbacks : public NimBLECharacteristicCallbacks {
     volatile bool* _subscribed;
 public:
@@ -234,6 +249,8 @@ void BleController::begin() {
         _gpReport = _hidDevice->getInputReport(XBOX_INPUT_REPORT_ID);
         _outputReport = _hidDevice->getOutputReport(XBOX_OUTPUT_REPORT_ID);
         _dofReport = _hidDevice->getOutputReport(XBOX_DOF_REPORT_ID);
+        _identityReport = _hidDevice->getFeatureReport(XBOX_IDENTITY_REPORT_ID);
+        setIdentityValue(_identityReport);
     } else {
         _hidDevice->setManufacturer("PinOne");
         _hidDevice->setPnp(0x02, 0x39F5, 0x9208, 0x0100);  // Cleveland Software Design's assigned USB-IF vendor ID
@@ -271,6 +288,10 @@ void BleController::begin() {
     if (_dofReport) {
         static DofCallbacks dofCb;
         _dofReport->setCallbacks(&dofCb);
+    }
+    if (_identityReport) {
+        static IdentityCallbacks identityCb;
+        _identityReport->setCallbacks(&identityCb);
     }
 
     _hidDevice->startServices();
