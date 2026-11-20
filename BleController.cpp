@@ -375,7 +375,8 @@ void BleController::processGamepadMode() {
     uint8_t dpad = buildDpad(dpadUp, dpadRight, dpadDown, dpadLeft);
 
     // Read analog axes directly from globals
-    int16_t plungerVal = plunger.getAdjustedValue();
+    // Same value as the USB axis (rest, quick release and delay applied), not the raw mapped reading
+    int16_t plungerVal = plunger.getReportedValue();
     // Scaled to the full axis range like the USB gamepad; the raw values only
     // span +/-accelerometerMax, which a host would read as barely moving
     int16_t accelX = accel.getXAxis();
